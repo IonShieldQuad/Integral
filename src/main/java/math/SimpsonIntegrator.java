@@ -4,6 +4,8 @@ import java.util.function.DoubleBinaryOperator;
 import java.util.function.DoubleUnaryOperator;
 
 public class SimpsonIntegrator implements Integrator {
+    private static final double EPSILON = 0.0001;
+    
     @Override
     public DoubleBinaryOperator integrate(DoubleUnaryOperator function, int n) {
         return (a, b) -> {
@@ -24,7 +26,24 @@ public class SimpsonIntegrator implements Integrator {
             res *= h;
             res /= 3;
             
+            double e = (a + b) / 2;
+            double r = (b - a) * Math.pow(h, 4) * derivative(function, e, 4) / 180;
+            
+            if (!Double.isNaN(r) && Double.isFinite(r)) {
+                res += r;
+            }
+            
             return res;
         };
+    }
+    
+    private double derivative(DoubleUnaryOperator f, double x, int order) {
+        if (order < 0) {
+            throw new IllegalArgumentException("Invalid order: " + order);
+        }
+        if (order == 0) {
+            return f.applyAsDouble(x);
+        }
+        return (derivative(f, x + EPSILON, order - 1) - derivative(f, x, order - 1)) / EPSILON;
     }
 }
